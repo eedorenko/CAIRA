@@ -46,10 +46,6 @@ export default async ({ context, github, core }) => {
       }
     };
 
-    // flags
-    const flagCreateIssueOnFailedTest = process.env.FLAG_CREATE_ISSUE_ON_FAILED_TEST === 'true';
-    core.info(`Flag - Create Issue On Failed Test: ${flagCreateIssueOnFailedTest}`);
-
     // Inputs
     const workDir = core.getInput('WORKDIR', { required: true });
     const tfVersionVersion = core.getInput('TFVERSION_VERSION', { required: true });
@@ -198,16 +194,12 @@ ${tfTestExitCode !== 'unknown' ? testBody : ''}
 
     // Handle different event types
     if (context.eventName === 'schedule') {
-      if (flagCreateIssueOnFailedTest) {
-        await github.rest.issues.create({
-          ...context.repo,
-          title: `[bug] E2E Terraform Test Failure in \`${workDir}\``,
-          body: issueHeader + issueBody,
-          labels: ['type/bug']
-        });
-      } else {
-        core.info('Skipping issue creation for scheduled event as the flag is set to false.');
-      }
+      await github.rest.issues.create({
+        ...context.repo,
+        title: `[bug] E2E Terraform Test Failure in \`${workDir}\``,
+        body: issueHeader + issueBody,
+        labels: ['type/bug']
+      });
     } else if (context.eventName === 'pull_request' || context.eventName === 'pull_request_target') {
       const { data: comments } = await github.rest.issues.listComments({
         ...context.repo,

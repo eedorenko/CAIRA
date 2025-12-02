@@ -39,7 +39,7 @@ All zones are linked to the VNet for private name resolution.
 ### Initial Deployment
 
 ```bash
-cd testing/infrastructure_pools/foundry_standard_private
+cd modules/infrastructure_pools/foundry_standard_private
 terraform init
 terraform apply
 ```
@@ -119,7 +119,7 @@ export TF_VAR_search_service_name="srch-fstdprv-durable"
 ### Health Check
 
 ```bash
-cd testing/infrastructure_pools/foundry_standard_private
+cd modules/infrastructure_pools/foundry_standard_private
 terraform plan  # Should show no changes if healthy
 ```
 
