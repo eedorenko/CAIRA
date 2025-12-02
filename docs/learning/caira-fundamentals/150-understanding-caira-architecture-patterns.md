@@ -2,14 +2,14 @@
 # Core Metadata
 title: "Kata: Understanding CAIRA Architecture Patterns"
 description: Compare four CAIRA reference architectures and match business requirements to appropriate deployment patterns for Azure AI Foundry
-author: Edge AI Team
+author: HVE Essentials Team
 ms.date: 2025-12-02
 ms.topic: how-to-guide
 
 # Kata Identity
 kata_id: caira-fundamentals-150-understanding-architecture-patterns
 kata_category:
-  - ai-assisted-engineering
+  - caira-fundamentals
 kata_difficulty: 1
 estimated_time_minutes: 30
 
@@ -53,6 +53,7 @@ requires_github_account: false
 
 # SEO & Discoverability
 tags:
+  - caira-fundamentals
   - ai-assisted-engineering
 search_keywords:
   - CAIRA architecture comparison
