@@ -2,16 +2,16 @@
 # Core Metadata
 title: "Kata: Devcontainer & Foundry Basic Deployment"
 description: Deploy CAIRA foundry_basic architecture using devcontainer workflow with AI-assisted Terraform deployment and validation
-author: Edge AI Team
+author: HVE Essentials Team
 ms.date: 2025-12-02
 ms.topic: how-to-guide
 
 # Kata Identity
 kata_id: caira-fundamentals-200-devcontainer-foundry-basic-deployment
 kata_category:
-  - ai-assisted-engineering
+  - caira-fundamentals
 kata_difficulty: 2
-estimated_time_minutes: 35
+estimated_time_minutes: 39
 
 # Learning Content
 learning_objectives:
@@ -22,6 +22,7 @@ learning_objectives:
   - Make informed configuration decisions for variable management
   - Validate successful Azure AI Foundry infrastructure deployment
 prerequisite_katas:
+  - caira-fundamentals-100-gathering-requirements-with-caira-assistant
   - caira-fundamentals-150-understanding-architecture-patterns
 technologies:
   - Docker
@@ -50,6 +51,9 @@ common_pitfalls:
   - Applying Terraform without reviewing plan first
   - Insufficient Azure permissions (need Contributor + User Access Administrator)
   - Not setting ARM_SUBSCRIPTION_ID environment variable before Terraform commands
+  - Using non-existent variable names (e.g., resource_group_name instead of resource_group_resource_id)
+  - Providing resource_group_resource_id when you want auto-creation (leave it unset/null for auto-create)
+  - Deploying to regions without AI model availability (use eastus for best compatibility)
 
 # Requirements
 requires_azure_subscription: true
@@ -58,6 +62,7 @@ requires_github_account: false
 
 # SEO & Discoverability
 tags:
+  - caira-fundamentals
   - ai-assisted-engineering
 search_keywords:
   - CAIRA devcontainer deployment
@@ -72,7 +77,7 @@ real_world_application: New team members onboard to CAIRA platform by deploying 
 AI_COACH: This kata introduces hands-on Terraform deployment within devcontainer.
 Guide learners to ALWAYS review terraform plan output before apply. If they rush
 to apply without reviewing, remind them this is a critical safety practice.
-The caira-assistant chatmode should be used throughout for validation checkpoints.
+The caira-assistant chatmode is recommended (but optional) for validation checkpoints.
 -->
 
 ## Quick Context
@@ -81,26 +86,28 @@ The caira-assistant chatmode should be used throughout for validation checkpoint
 
 **Real Challenge**: Your team needs a standardized way to onboard new engineers to the CAIRA platform. Everyone should use the same development environment with pre-configured tools, follow consistent deployment workflows, and leverage AI assistance to avoid common configuration mistakes. You're the first to validate this workflow.
 
-**Your Task**: Open CAIRA in VS Code devcontainer, authenticate with Azure, use caira-assistant to guide your deployment decisions, and successfully deploy the foundry_basic architecture with proper validation at each step.
+**Your Task**: Open CAIRA in VS Code devcontainer, authenticate with Azure, optionally use caira-assistant chatmode to guide your deployment decisions, and successfully deploy the foundry_basic architecture with proper validation at each step.
 
 ## Essential Setup
 
 **Required** (check these first):
 
 - [ ] Docker Desktop installed and **running** (check status bar/tray icon)
-- [ ] VS Code installed with Remote - Containers extension (ms-vscode-remote.remote-containers)
+- [ ] VS Code installed with **Dev Containers extension** (ms-vscode-remote.remote-containers) - **MUST be installed before opening CAIRA repo**
 - [ ] CAIRA repository cloned locally (`git clone https://github.com/microsoft/CAIRA.git`)
 - [ ] Azure subscription with these permissions: **Contributor** + **User Access Administrator** (or **Owner**)
 - [ ] Azure CLI authentication capability (browser or device code flow available)
 - [ ] Completed Kata 150 (Understanding CAIRA Architecture Patterns)
 
+**Important**: Use a **separate VS Code instance** (not this one) to work through the kata steps. This kata instance should remain open for reference and progress tracking while you work in the CAIRA repository.
+
 **Quick Validation**: Open Docker Desktop and confirm it shows "Engine running". In VS Code, verify the Remote - Containers extension is installed and enabled.
 
 > **🤖 Want Interactive AI Coaching?**
 >
-> Load the **CAIRA Assistant** chat mode for deployment-specific guidance and validation!
+> Load the **Learning Kata Coach** chat mode for task check-offs, progress tracking, progressive hints, and personalized guidance.
 >
-> In GitHub Copilot Chat, select **caira-assistant** mode and say:
+> In GitHub Copilot Chat, select **Learning Kata Coach** mode and say:
 >
 > ```text
 > I'm working on the Devcontainer & Foundry Basic Deployment kata and want guidance for deploying foundry_basic architecture.
@@ -115,10 +122,11 @@ The caira-assistant chatmode should be used throughout for validation checkpoint
 **Steps**:
 
 1. **Open** CAIRA repository in VS Code
-   - [ ] Launch VS Code
+   - [ ] Launch a **new VS Code window** (separate from this kata instance)
    - [ ] Open the folder containing your cloned CAIRA repository
    - [ ] Wait for VS Code to detect the `.devcontainer` configuration
    - **Pro tip**: VS Code should show a notification "Folder contains a Dev Container configuration file"
+   - **Note**: Keep this kata window open for reference while working in the CAIRA window
 
 2. **Reopen** in devcontainer
    - [ ] Click "Reopen in Container" when prompted (or use Command Palette: "Dev Containers: Reopen in Container")
@@ -142,15 +150,16 @@ The caira-assistant chatmode should be used throughout for validation checkpoint
 
 ### Task 2: Configure Deployment with AI Assistance (12 minutes)
 
-**What You'll Do**: Use caira-assistant chatmode to determine the right configuration approach and prepare your Terraform variables for foundry_basic deployment.
+**What You'll Do**: Review variable requirements and prepare your Terraform variables for foundry_basic deployment. Optionally use caira-assistant chatmode for guided recommendations.
 
 **Steps**:
 
-1. **Activate** caira-assistant chatmode
+1. **Activate** caira-assistant chatmode (optional but recommended)
    - [ ] Open GitHub Copilot Chat in VS Code
-   - [ ] Select **caira-assistant** mode from the dropdown
+   - [ ] Select **caira-assistant** mode from the dropdown if available
    - [ ] Ask: "I want to deploy foundry_basic. What are the required variables and recommended configuration approach?"
    - **Pro tip**: The assistant will explain terraform.tfvars vs main.tf variable approaches
+   - **Note**: You can complete this kata without caira-assistant by reviewing the files directly
 
 2. **Navigate** to foundry_basic directory
    - [ ] In terminal: `cd reference_architectures/foundry_basic`
@@ -160,31 +169,37 @@ The caira-assistant chatmode should be used throughout for validation checkpoint
 
 3. **Review** variable requirements
    - [ ] Open `variables.tf` and scan for required variables (those without defaults)
-   - [ ] Note the `subscription_id` variable (required)
-   - [ ] Ask caira-assistant: "Which variables are required vs optional for minimal foundry_basic deployment?"
-   - **Validation checkpoint**: Understand that subscription_id is mandatory, location and resource_group_name are optional but recommended
+   - [ ] Identify available variables: `location`, `resource_group_resource_id`, `sku`, `enable_telemetry`, `tags`
+   - [ ] Optional: Ask caira-assistant: "Which variables are required vs optional for minimal foundry_basic deployment?"
+   - **Validation checkpoint**: ALL variables have defaults - deployment works with zero configuration! Location defaults to swedencentral, resource group auto-creates with unique name
 
 4. **Choose** configuration method
-   - [ ] Ask caira-assistant: "Should I create terraform.tfvars or set variables via command line for this deployment?"
-   - [ ] Review the assistant's recommendation (tfvars is cleaner for multiple variables)
+   - [ ] Optional: Ask caira-assistant: "Should I create terraform.tfvars or set variables via command line for this deployment?"
+   - [ ] Recommendation: Create `terraform.tfvars` file for configuration (tfvars is cleaner for multiple variables)
    - [ ] Decision: Create `terraform.tfvars` file for configuration
    - **Pro tip**: Using tfvars keeps your configuration reusable and version-controllable
 
-5. **Create** terraform.tfvars file
+5. **Create** terraform.tfvars file (optional - customize deployment)
    - [ ] Create file: `touch terraform.tfvars`
-   - [ ] Open in editor and add minimum required configuration:
+   - [ ] Open in editor and add optional configuration to override defaults:
 
    ```hcl
-   subscription_id     = "YOUR_SUBSCRIPTION_ID_HERE"
-   location            = "eastus"
-   resource_group_name = "rg-caira-foundry-basic-dev"
+   # Optional: Override default location (default is swedencentral)
+   # Recommended: eastus for best AI model availability
+   location = "eastus"
+
+   # Optional: Use existing resource group instead of auto-creating one
+   # resource_group_resource_id = "/subscriptions/YOUR_SUB_ID/resourceGroups/rg-existing"
+
+   # Optional: Override SKU (default is S0)
+   # sku = "S0"
    ```
 
-   - [ ] Replace `YOUR_SUBSCRIPTION_ID_HERE` with your actual subscription ID (from `az account show --query id -o tsv`)
+   - [ ] **Note**: All variables have defaults - empty terraform.tfvars works fine!
    - [ ] Save the file
-   - **Success check**: terraform.tfvars exists with valid subscription ID and location
+   - **Success check**: terraform.tfvars exists (can be empty or with location override)
 
-### Task 3: Execute Terraform Deployment Workflow (13 minutes)
+### Task 3: Execute Terraform Deployment Workflow (15 minutes)
 
 **What You'll Do**: Run the complete Terraform deployment lifecycle (init → plan → apply) with AI-assisted validation at each checkpoint to safely provision Azure AI Foundry infrastructure.
 
@@ -206,10 +221,11 @@ The caira-assistant chatmode should be used throughout for validation checkpoint
 3. **Generate** and review plan
    - [ ] Run: `terraform plan -out=tfplan`
    - [ ] **CRITICAL**: Read the plan output carefully
-   - [ ] Count resources to be created (should be ~7-10 resources for foundry_basic)
-   - [ ] Verify resource types include: azurerm_resource_group, azurerm_cognitive_account, azurerm_application_insights
-   - [ ] Ask caira-assistant: "Review this terraform plan output - does it look correct for foundry_basic minimal deployment?"
-   - **Success check**: Plan shows only "create" actions (no updates or deletes), resource count matches expectation
+   - [ ] Count resources to be created (should be ~20 resources: 1 resource group + 19 AI Foundry resources)
+   - [ ] Verify resource types include: azurerm_resource_group (auto-created), azurerm_log_analytics_workspace, azurerm_application_insights, azapi_resource (AI Foundry and project), azurerm_cognitive_deployment (3 model deployments)
+   - [ ] Confirm resource group name follows pattern: `rg-basic-XXXXX` (auto-generated unique name)
+   - [ ] Optional: Ask caira-assistant: "Review this terraform plan output - does it look correct for foundry_basic minimal deployment?"
+   - **Success check**: Plan shows only "create" actions (no updates or deletes), resource count matches expectation, resource group being created
 
 4. **Apply** the deployment
    - [ ] Run: `terraform apply tfplan`
@@ -220,16 +236,67 @@ The caira-assistant chatmode should be used throughout for validation checkpoint
 
 5. **Capture** deployment outputs
    - [ ] Run: `terraform output`
-   - [ ] Note the resource_group_name, ai_project_id, and other outputs
+   - [ ] Note the resource_group_name, ai_foundry_default_project_id, and other outputs
    - [ ] Copy resource_group_name for next task validation
    - **Validation checkpoint**: Outputs show deployed resource identifiers
 
 6. **Verify** in Azure Portal
    - [ ] Open Azure Portal in browser
    - [ ] Navigate to Resource Groups
-   - [ ] Find your deployed resource group (e.g., rg-caira-foundry-basic-dev)
-   - [ ] Confirm resources exist: Cognitive Services, Log Analytics Workspace, Application Insights
+   - [ ] Find your deployed resource group (look for `rg-basic-XXXXX` with auto-generated suffix)
+   - [ ] Confirm resources exist: AI Foundry, AI Foundry project, Log Analytics Workspace, Application Insights
    - **Success check**: All expected resources visible and show "Succeeded" deployment state
+
+### Task 4: Explore Deployed Resources in Azure Portal (8 minutes)
+
+**What You'll Do**: Navigate through Azure Portal and AI Foundry portal to understand the deployed infrastructure, verify resource configurations, and explore the AI project workspace.
+
+**Steps**:
+
+1. **Examine** resource group contents
+   - [ ] In Azure Portal, open your resource group (rg-basic-XXXXX)
+   - [ ] Identify each resource and its type:
+     - **AI Foundry** - The AI Foundry resource for managing AI services
+     - **AI Foundry project** - Your workspace for AI development
+     - **Log Analytics Workspace** - Centralized logging and monitoring
+     - **Application Insights** - Application performance monitoring
+   - [ ] Click on each resource to view its Overview page
+   - **Validation checkpoint**: AI Foundry resource shows "Status: Succeeded" on Overview page
+   - **Expected result**: Understanding of how Terraform resources map to Azure Portal resources
+
+2. **Launch** Foundry portal
+   - [ ] Return to the AI Foundry resource in Azure Portal
+   - [ ] Look for the "Go to Azure AI Foundry portal" button at the top of the Overview page
+   - [ ] Click the button to launch the Foundry portal (opens <https://ai.azure.com>)
+   - [ ] Sign in with your Azure credentials if prompted
+   - [ ] Verify your project appears in the project list
+   - **Expected result**: Foundry portal opens and shows your deployed project
+
+3. **Explore** Foundry project workspace
+   - [ ] In the Foundry portal, click on your project to open the project workspace
+   - [ ] Navigate to "Models + endpoints" in left menu
+   - [ ] Verify model deployments exist:
+     - **gpt-4** (or gpt-4.1) - Chat completion model
+     - **text-embedding-3-large** - Embedding model for semantic search
+     - **o4-mini** - Reasoning model
+   - [ ] Click on one model deployment to see its configuration (version, rate limits, region)
+   - **Validation checkpoint**: All three model deployments show "Succeeded" status
+   - **Expected result**: Understanding what models are immediately available for development
+
+4. **Review** project workspace
+   - [ ] Explore the available sections in the left menu
+   - [ ] Check the project Overview page to see basic information
+   - [ ] Familiarize yourself with the project workspace layout and navigation
+   - **Pro tip**: The project workspace provides access to AI development tools and model configurations
+   - **Expected result**: Understanding the project's structure and available features
+
+5. **Verify** monitoring resources in Azure Portal
+   - [ ] Return to Azure Portal and open your resource group
+   - [ ] Click on the Application Insights resource
+   - [ ] Confirm it shows "Status: Succeeded" on the Overview page
+   - [ ] Click on the Log Analytics Workspace resource
+   - [ ] Confirm it shows "Status: Active" and is ready to collect logs
+   - **Success check**: Monitoring resources are deployed and ready to capture metrics once you start using the models
 
 ## Completion Check
 
@@ -237,12 +304,16 @@ The caira-assistant chatmode should be used throughout for validation checkpoint
 
 - [ ] Devcontainer opened successfully and all development tools verified
 - [ ] Azure CLI authenticated within container environment
-- [ ] caira-assistant provided guidance on configuration approach
-- [ ] terraform.tfvars created with correct subscription and location settings
+- [ ] Reviewed configuration approach (with or without caira-assistant)
+- [ ] terraform.tfvars created with correct location settings (or left empty to use defaults)
 - [ ] Terraform initialization completed without errors
 - [ ] Terraform plan reviewed and validated before applying
 - [ ] Infrastructure deployed successfully (apply completed with 0 errors)
 - [ ] All expected resources visible and healthy in Azure Portal
+- [ ] Explored Azure Portal and identified all deployed resources (AI Foundry, project, Log Analytics, App Insights)
+- [ ] Navigated Foundry portal and reviewed project workspace
+- [ ] Verified three model deployments (gpt-4, text-embedding-3-large, o4-mini) are active
+- [ ] Understand AI Foundry and project relationship and observability stack configuration
 - [ ] Can explain benefits of devcontainer for team standardization
 - [ ] Can describe the Terraform deployment workflow (init → plan → apply)
 
@@ -327,6 +398,14 @@ terraform apply tfplan        # Apply the reviewed plan
 - **Request Increase**: Submit quota increase request through Azure Portal (Support → Quotas)
 - **Different Region**: Try deploying to alternate region with available quota
 - **Resource SKUs**: Some regions have limited SKU availability for AI services
+
+**Issue**: Terraform fails with "ResourceGroupNotFound" error
+
+- **Root Cause**: You provided `resource_group_resource_id` pointing to non-existent resource group
+- **Solution 1**: Remove `resource_group_resource_id` from terraform.tfvars to let Terraform auto-create the resource group
+- **Solution 2**: Create the resource group first: `az group create --name <name> --location <location>`, then provide full resource ID
+- **Solution 3**: Use an existing resource group by providing its full resource ID
+- **Verify**: Check `terraform plan` shows `azurerm_resource_group.this` being created when auto-creating
 
 **Issue**: Resources deployed but not visible in Azure Portal
 
