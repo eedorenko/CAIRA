@@ -138,11 +138,32 @@ You're a platform engineer deploying CAIRA infrastructure for a new AI-powered f
 
 - [ ] Completed Kata 200 (Devcontainer & Foundry Basic Deployment)
 - [ ] CAIRA repository cloned and devcontainer working
-- [ ] Azure CLI authenticated (`az account show` succeeds)
+- [ ] Azure CLI authenticated inside devcontainer
 - [ ] Access to Azure Portal with subscription visibility
-- [ ] Previous CAIRA deployment attempt (successful or failed - provides context)
+- [ ] Navigate to `reference_architectures/foundry_basic` directory
 
-**Quick Validation**: Run `terraform version && az account show` - both commands should succeed without errors.
+**Configure environment for Terraform**:
+
+```bash
+# Navigate to the foundry_basic directory
+cd reference_architectures/foundry_basic
+
+# Set ARM_SUBSCRIPTION_ID environment variable (REQUIRED for Terraform)
+export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+
+# Verify it's set correctly
+echo $ARM_SUBSCRIPTION_ID
+
+# Create terraform.tfvars to override default location (swedencentral → eastus)
+cat > terraform.tfvars << EOF
+location = "eastus"
+EOF
+
+# Verify Azure CLI authentication
+az account show
+```
+
+**Quick Validation**: Run `terraform version && echo $ARM_SUBSCRIPTION_ID && cat terraform.tfvars` - all should succeed and show eastus location.
 
 > **🤖 Want Interactive AI Coaching?**
 >
@@ -208,23 +229,32 @@ You're a platform engineer deploying CAIRA infrastructure for a new AI-powered f
 
 2. **Check** current quota usage
    - [ ] Run: `az cognitiveservices account list-skus --location eastus -o table` (check AI Services availability)
-   - [ ] Run: `az search service list -o table` (check existing AI Search services)
+   - [ ] Run: `az cognitiveservices account list -o table` (list existing AI Services accounts)
+   - [ ] Run: `az resource list --resource-type Microsoft.Search/searchServices -o table` (check AI Search services across subscription)
    - [ ] Count existing CAIRA resources in your subscription
    - **Pro tip**: Some quota limits are per-region, some are per-subscription - error message specifies which
    - [ ] **Expected result**: List of existing resources counting toward quota
 
 3. **Find** quota limits and request increases
-   - [ ] Navigate to Azure Portal → Subscriptions → Your Subscription → Usage + quotas
-   - [ ] Search for the resource type from error message (e.g., "Cognitive Services")
-   - [ ] Note current usage vs limit
-   - [ ] Click "Request increase" if quota exceeded
-   - **Success check**: You know current quota, usage, and how to request increase
+   - [ ] Navigate to Azure AI Foundry portal: https://ai.azure.com
+   - [ ] Select **Management center** from the bottom of the left pane
+   - [ ] Select **Quota** from the left pane to open the quota view
+   - [ ] Review quota hierarchy: Quota types (GlobalStandard, Standard) → Model types (gpt-4o-mini, text-embedding-3-large, etc.) → Regions (eastus) → Quota values
+   - [ ] Expand deployment groupings to see model deployments and quota allocation by region
+   - [ ] Use "Show all quota" toggle to display all quota or only currently allocated quota
+   - [ ] Optional: Remove grouping to see a plain table view of all quotas
+   - [ ] Click "Request quota" link in the table to request quota increases for specific models/regions
+   - **Pro tip**: For production endpoints, request dedicated quota; shared quota pool is for temporary testing only
+   - **Reference**: [AI Foundry quota documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/quota)
+   - **Success check**: You understand where to check quotas and how to request increases
 
 4. **Implement** workaround strategies
-   - [ ] Document alternative approaches: deploy to different region, delete unused resources, use existing resources
-   - [ ] For testing: consider deleting previous CAIRA deployment to free quota
-   - [ ] Update terraform.tfvars to use different region with available quota
-   - **Expected result**: Documented workaround strategy for quota constraints
+   - [ ] Document alternative approaches when hitting quota limits
+   - [ ] Option 1: Deploy to different region with available quota (update terraform.tfvars location)
+   - [ ] Option 2: Delete unused CAIRA deployments to free quota in desired region
+   - [ ] Option 3: Request quota increase from Azure support (can take 1-3 business days)
+   - [ ] For this kata: With 3 accounts deployed, you likely have room for more in a standard subscription
+   - **Expected result**: Clear strategy for handling quota constraints in production scenarios
 
 ### Task 3: Fix Naming Conflicts and Uniqueness Errors (8 minutes)
 
@@ -242,10 +272,10 @@ You're a platform engineer deploying CAIRA infrastructure for a new AI-powered f
 
 2. **Check** name availability before deployment
    - [ ] Run: `az storage account check-name --name cairabasicstorage`
-   - [ ] Observe: `"nameAvailable": false` and reason message
-   - [ ] Run: `az search service check-name --name myaisearch`
+   - [ ] Observe the JSON output with `"nameAvailable": true` or `false` and reason message
+   - [ ] Try with a different name to see how availability checking works
    - **Pro tip**: Always check name availability for globally unique resources before deploying
-   - [ ] **Expected result**: Understanding of how to verify name availability
+   - [ ] **Expected result**: Understanding of how to verify name availability for storage accounts
 
 3. **Implement** unique naming strategy
    - [ ] Add random suffix to resource names in terraform.tfvars (e.g., append your initials + random numbers)
