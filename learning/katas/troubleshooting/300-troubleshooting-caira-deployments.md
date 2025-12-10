@@ -50,6 +50,7 @@ common_pitfalls:
   - Attempting to manually edit Terraform state files (dangerous practice)
   - Forcing state unlock without verifying process safety
   - Not documenting solutions for future reference and team knowledge
+  - Using email-based identity queries for guest users (use object ID instead)
 
 # Requirements
 requires_azure_subscription: true
@@ -75,7 +76,7 @@ related_katas:
 related_labs: []
 skill_assessment_id: ""
 validation_commands:
-  - az role assignment list --assignee $(az account show --query user.name -o tsv) --subscription $(az account show --query id -o tsv)
+  - az role assignment list --all --assignee $(az ad signed-in-user show --query id -o tsv) -o table
   - az cognitiveservices account list-skus --location eastus -o table
   - az storage account check-name --name <storage-account-name>
   - terraform version
@@ -194,18 +195,18 @@ az account show
    - **Pro tip**: Terraform errors include the exact Azure RBAC action that failed - this tells you what permission is missing
 
 2. **Check** current role assignments
-   - [ ] Run: `az role assignment list --assignee $(az account show --query user.name -o tsv) --subscription $(az account show --query id -o tsv) -o table`
+   - [ ] Run: `az role assignment list --all --assignee $(az ad signed-in-user show --query id -o tsv) -o table`
    - [ ] Look for your current roles on the subscription
-   - [ ] Verify you have BOTH: `Contributor` AND `User Access Administrator` (CAIRA requires both)
-   - **Validation checkpoint**: Do you see both required roles in the output?
-   - [ ] **Expected result**: Table showing role assignments including Contributor and User Access Administrator
+   - [ ] Verify you have BOTH: `Contributor` AND `User Access Administrator` (CAIRA requires both), OR the `Owner` role (which includes both)
+   - **Pro tip**: Using object ID instead of email works reliably for all user types (including guest users)
+   - **Validation checkpoint**: Do you see the required roles in the output?
+   - [ ] **Expected result**: Table showing role assignments including Owner OR (Contributor + User Access Administrator)
 
 3. **Diagnose** permission scope issues
-   - [ ] If roles are missing, run: `az role assignment list --all --assignee $(az account show --query user.name -o tsv) -o table`
-   - [ ] Check if roles are assigned at resource group level instead of subscription level
-   - [ ] Note the scope column - roles can be at subscription, resource group, or resource level
-   - **Pro tip**: CAIRA deployments creating new resource groups need subscription-level Contributor role
-   - [ ] **Expected result**: Understanding of where your permissions are scoped
+   - [ ] Review the Scope column in your role assignments - look for `/subscriptions/...` (subscription-level) vs longer paths (resource group or resource level)
+   - [ ] Identify if your roles are scoped at subscription level or only at resource group level
+   - **Pro tip**: CAIRA deployments creating new resource groups require subscription-level permissions (Owner or Contributor role)
+   - [ ] **Expected result**: Understanding of where your permissions are scoped and whether they're sufficient for CAIRA deployment
 
 4. **Resolve** permission issues
    - [ ] Document the missing role and scope needed
@@ -235,18 +236,15 @@ az account show
    - **Pro tip**: Some quota limits are per-region, some are per-subscription - error message specifies which
    - [ ] **Expected result**: List of existing resources counting toward quota
 
-3. **Find** quota limits and request increases
-   - [ ] Navigate to Azure AI Foundry portal: https://ai.azure.com
-   - [ ] Select **Management center** from the bottom of the left pane
-   - [ ] Select **Quota** from the left pane to open the quota view
-   - [ ] Review quota hierarchy: Quota types (GlobalStandard, Standard) → Model types (gpt-4o-mini, text-embedding-3-large, etc.) → Regions (eastus) → Quota values
-   - [ ] Expand deployment groupings to see model deployments and quota allocation by region
-   - [ ] Use "Show all quota" toggle to display all quota or only currently allocated quota
-   - [ ] Optional: Remove grouping to see a plain table view of all quotas
-   - [ ] Click "Request quota" link in the table to request quota increases for specific models/regions
-   - **Pro tip**: For production endpoints, request dedicated quota; shared quota pool is for temporary testing only
+3. **Understand** quota types and where to check them
+   - [ ] Recognize two types of quotas: **Account-level** (number of AI Services accounts, checked via CLI) and **Model-level** (tokens per minute for deployments, checked in AI Foundry portal)
+   - [ ] Note: The CLI commands in Step 2 checked account-level quotas - you've already completed the essential quota diagnostics
+   - [ ] **Optional exploration**: Navigate to Azure AI Foundry portal (https://ai.azure.com) → Management center → Quota to see model deployment quotas (TPM - Tokens Per Minute)
+   - [ ] **Optional**: Review quota hierarchy in portal: Quota types (GlobalStandard, Standard) → Model types (gpt-4o-mini, text-embedding-3-large) → Regions → Quota values
+   - [ ] **Optional**: Explore "Request quota" functionality for model-level quota increases
+   - **Pro tip**: For production endpoints, request dedicated model quota; shared quota pool is for temporary testing only
    - **Reference**: [AI Foundry quota documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/quota)
-   - **Success check**: You understand where to check quotas and how to request increases
+   - **Success check**: You understand the difference between account-level and model-level quotas, and know where to check each
 
 4. **Implement** workaround strategies
    - [ ] Document alternative approaches when hitting quota limits
@@ -271,11 +269,11 @@ az account show
    - **Validation checkpoint**: Do you understand why the name must be globally unique?
 
 2. **Check** name availability before deployment
-   - [ ] Run: `az storage account check-name --name cairabasicstorage`
-   - [ ] Observe the JSON output with `"nameAvailable": true` or `false` and reason message
-   - [ ] Try with a different name to see how availability checking works
+   - [ ] Run: `az storage account check-name --name myaccount`
+   - [ ] Observe the JSON output with `"nameAvailable": false` and reason message explaining the name is taken
+   - [ ] Try with a more unique name (e.g., your initials + numbers) to see the difference
    - **Pro tip**: Always check name availability for globally unique resources before deploying
-   - [ ] **Expected result**: Understanding of how to verify name availability for storage accounts
+   - [ ] **Expected result**: Understanding of how to verify name availability and interpret unavailable vs available responses
 
 3. **Implement** unique naming strategy
    - [ ] Add random suffix to resource names in terraform.tfvars (e.g., append your initials + random numbers)
