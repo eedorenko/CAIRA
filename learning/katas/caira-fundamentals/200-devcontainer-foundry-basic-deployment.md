@@ -12,6 +12,7 @@ kata_category:
   - caira-fundamentals
 kata_difficulty: 2
 estimated_time_minutes: 39
+requires_dev_container: true
 
 # Learning Content
 learning_objectives:
