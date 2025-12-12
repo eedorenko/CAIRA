@@ -130,6 +130,16 @@ Visual representation of CAIRA fundamentals skill progression:
     Devcontainer Workflow
     Terraform Deployment
     Azure AI Foundry Validation
+        ↓
+[Kata 350: Validate with Sample App]
+        ↓
+  End-to-End Inference Testing
+  Authentication Verification
+        ↓
+[Kata 400: Customize for Requirements]
+        ↓
+  Dev/Prod Customization Plan
+  Plan-First Change Validation
               ↓
     Production-Ready CAIRA Foundation
 ```
@@ -193,6 +203,41 @@ Deploy CAIRA's foundry_basic architecture using the built-in devcontainer enviro
 
 **Scaffolding**: Medium-Heavy - Detailed deployment steps with validation checkpoints and common pitfall guidance
 
+### [Kata 350: Validating CAIRA with Sample AI Application](./350-validating-caira-with-sample-ai-application.md)
+
+**Difficulty**: ⭐⭐⭐ (3/5) | **Time**: 45 minutes
+
+Validate a deployed CAIRA environment end-to-end by running a sample Python application, verifying inference, endpoints, and authentication are configured correctly.
+
+**You'll Learn**:
+
+- Build a structured validation checklist for CAIRA deployments
+- Deploy and configure a sample Python application against AI Foundry endpoints
+- Verify authentication and access patterns for application workloads
+
+**Prerequisites**: [Kata 200: Devcontainer & Foundry Basic Deployment](./200-devcontainer-foundry-basic-deployment.md)
+
+**Scaffolding**: Medium-Heavy - Guided validation steps with checkpoints and common pitfalls
+
+### [Kata 400: Customizing CAIRA for Your Requirements](./400-customizing-caira-for-your-requirements.md)
+
+**Difficulty**: ⭐⭐⭐ (3/5) | **Time**: 45 minutes
+
+Customize CAIRA reference architectures to match real organizational requirements (region, tags, environment separation, networking posture) using supported Terraform variables and a safe plan-first workflow.
+
+**You'll Learn**:
+
+- Select the right CAIRA architecture baseline for your constraints
+- Customize deployments via `variables.tf` and environment-specific `terraform.tfvars`
+- Validate changes safely using `terraform validate` and `terraform plan`
+
+**Prerequisites**:
+
+- [Kata 150: Understanding CAIRA Architecture Patterns](./150-understanding-caira-architecture-patterns.md)
+- [Kata 200: Devcontainer & Foundry Basic Deployment](./200-devcontainer-foundry-basic-deployment.md)
+
+**Scaffolding**: Medium-Heavy - Guided customization workflow with plan review checkpoints
+
 ## Kata Comparison Matrix
 
 | Kata                                                                                      | Difficulty | Time   | Technologies                                          | Scaffolding  | Prerequisites |
@@ -200,6 +245,8 @@ Deploy CAIRA's foundry_basic architecture using the built-in devcontainer enviro
 | [100: Gathering Requirements with CAIRA Assistant](./100-gathering-requirements-with-caira-assistant.md) | ⭐ (1/5)    | 20 min | CAIRA Assistant, GitHub Copilot, Requirements Analysis | Heavy        | None          |
 | [150: Understanding CAIRA Architecture Patterns](./150-understanding-caira-architecture-patterns.md)     | ⭐ (1/5)    | 30 min | CAIRA Reference Architectures, Azure AI Foundry       | Medium-Heavy | Kata 100 (recommended) |
 | [200: Devcontainer & Foundry Basic Deployment](./200-devcontainer-foundry-basic-deployment.md)          | ⭐⭐ (2/5)   | 39 min | Docker, VS Code, Terraform, Azure CLI, Azure AI Foundry | Medium-Heavy | Katas 100, 150 |
+| [350: Validating CAIRA with Sample AI Application](./350-validating-caira-with-sample-ai-application.md) | ⭐⭐⭐ (3/5) | 45 min | Python, Azure CLI, Azure AI Foundry SDK, CAIRA        | Medium-Heavy | Kata 200      |
+| [400: Customizing CAIRA for Your Requirements](./400-customizing-caira-for-your-requirements.md)        | ⭐⭐⭐ (3/5) | 45 min | Terraform, Azure AI Foundry, CAIRA                    | Medium-Heavy | Katas 150, 200 |
 
 ## Suggested Learning Sequences
 
@@ -210,8 +257,10 @@ If you're completely new to CAIRA and Azure AI Foundry:
 1. [Kata 100: Gathering Requirements with CAIRA Assistant](./100-gathering-requirements-with-caira-assistant.md) - Start with AI-assisted requirements analysis
 2. [Kata 150: Understanding CAIRA Architecture Patterns](./150-understanding-caira-architecture-patterns.md) - Build architectural decision-making skills
 3. [Kata 200: Devcontainer & Foundry Basic Deployment](./200-devcontainer-foundry-basic-deployment.md) - Execute your first deployment
+4. [Kata 350: Validating CAIRA with Sample AI Application](./350-validating-caira-with-sample-ai-application.md) - Validate infrastructure end-to-end
+5. [Kata 400: Customizing CAIRA for Your Requirements](./400-customizing-caira-for-your-requirements.md) - Turn one-off deployments into repeatable standards
 
-**Total Time**: ~90 minutes for complete foundational proficiency
+**Total Time**: ~179 minutes for complete foundational proficiency
 
 ### For Intermediate Learners
 
