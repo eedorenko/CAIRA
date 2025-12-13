@@ -148,7 +148,7 @@ Visual representation of CAIRA fundamentals skill progression:
 
 ### [Kata 100: Gathering Requirements with CAIRA Assistant](./100-gathering-requirements-with-caira-assistant.md)
 
-**Difficulty**: ⭐ (1/5) | **Time**: 20 minutes
+**Difficulty**: ⭐ (1/5) | **Time**: 30 minutes
 
 Learn to use the CAIRA Assistant chatmode to analyze business scenarios, extract technical requirements, and receive architecture recommendations aligned with organizational needs.
 
@@ -242,7 +242,7 @@ Customize CAIRA reference architectures to match real organizational requirement
 
 | Kata                                                                                      | Difficulty | Time   | Technologies                                          | Scaffolding  | Prerequisites |
 |-------------------------------------------------------------------------------------------|------------|--------|-------------------------------------------------------|--------------|---------------|
-| [100: Gathering Requirements with CAIRA Assistant](./100-gathering-requirements-with-caira-assistant.md) | ⭐ (1/5)    | 20 min | CAIRA Assistant, GitHub Copilot, Requirements Analysis | Heavy        | None          |
+| [100: Gathering Requirements with CAIRA Assistant](./100-gathering-requirements-with-caira-assistant.md) | ⭐ (1/5)    | 30 min | CAIRA Assistant, GitHub Copilot, Requirements Analysis | Heavy        | None          |
 | [150: Understanding CAIRA Architecture Patterns](./150-understanding-caira-architecture-patterns.md)     | ⭐ (1/5)    | 30 min | CAIRA Reference Architectures, Azure AI Foundry       | Medium-Heavy | Kata 100 (recommended) |
 | [200: Devcontainer & Foundry Basic Deployment](./200-devcontainer-foundry-basic-deployment.md)          | ⭐⭐ (2/5)   | 39 min | Docker, VS Code, Terraform, Azure CLI, Azure AI Foundry | Medium-Heavy | Katas 100, 150 |
 | [350: Validating CAIRA with Sample AI Application](./350-validating-caira-with-sample-ai-application.md) | ⭐⭐⭐ (3/5) | 45 min | Python, Azure CLI, Azure AI Foundry SDK, CAIRA        | Medium-Heavy | Kata 200      |
@@ -260,7 +260,7 @@ If you're completely new to CAIRA and Azure AI Foundry:
 4. [Kata 350: Validating CAIRA with Sample AI Application](./350-validating-caira-with-sample-ai-application.md) - Validate infrastructure end-to-end
 5. [Kata 400: Customizing CAIRA for Your Requirements](./400-customizing-caira-for-your-requirements.md) - Turn one-off deployments into repeatable standards
 
-**Total Time**: ~179 minutes for complete foundational proficiency
+**Total Time**: ~189 minutes for complete foundational proficiency
 
 ### For Intermediate Learners
 
