@@ -182,8 +182,6 @@ If you already have VNet, subnets, Cosmos DB, Storage Account, and AI Search:
 
 1. **Skip** to Task 2 with your gathered values
 
----
-
 #### Path B: Create Prerequisites with Azure CLI (20-30 minutes)
 
 If you need to create VNet, subnets, and capability host resources for this kata:
@@ -593,8 +591,6 @@ If you need to create VNet, subnets, and capability host resources for this kata
 - Explore [Kata 400: Customizing CAIRA for Your Requirements](./400-customizing-caira-for-your-requirements.md) to add organizational governance
 - Review Azure Security Benchmark recommendations for AI workloads
 
----
-
 ## Reference Appendix
 
 ### Production Pattern: Existing Resources
@@ -744,8 +740,6 @@ The `foundry_standard_private` architecture is designed to work with **existing 
   1. Retry `terraform apply` - the system should auto-create a new CapabilityHost
   1. **Note**: Account CapabilityHost can take 45-60 minutes to provision with agent network injection
 - **Solution if Still Creating**: Wait for "provisioningState" to become "Succeeded" before retrying Project creation
-
----
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
