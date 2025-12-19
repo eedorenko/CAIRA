@@ -51,18 +51,18 @@ The technologies covered—private networking, managed identities, RBAC, Terrafo
 
 ## Learning Path
 
-Progressive learning path from customization through security to lifecycle management:
+Progressive learning path from customization to production security:
 
 ```text
-[Kata 400: Customization] → [Kata 450: Security] → [Kata 500: Lifecycle]
-         ↓                          ↓                       ↓
-  Org Requirements         Production Security      Operational Excellence
-  Naming & Tagging         Private Networking        State Management
-  SKU Selection            Managed Identity          Update Procedures
-  Governance               RBAC & Zero-Trust         Team Collaboration
+[Kata 400: Customization] → [Kata 450: Production Security]
+         ↓                              ↓
+  Org Requirements              Zero-Trust Architecture
+  Naming & Tagging              Private Networking
+  SKU Selection                 Managed Identity
+  Governance                    RBAC & Compliance
 ```
 
-**Recommended Sequence**: Complete katas in order (400 → 450 → 500) for comprehensive production readiness.
+**Recommended Sequence**: Complete Kata 400 first to understand customization, then Kata 450 for production security hardening.
 
 ## Category Katas
 
@@ -105,60 +105,28 @@ Deploy CAIRA with zero-trust security including private networking, managed iden
 
 **Real-World Context**: Healthcare AI platform requiring HIPAA compliance with zero-trust principles: no public endpoints, managed identities only, complete network isolation, and comprehensive audit logging.
 
----
-
-### [Kata 500: Managing CAIRA Infrastructure Lifecycle](./500-managing-caira-lifecycle.md)
-
-**Difficulty**: ⭐⭐⭐⭐⭐ Legendary (5/5) | **Time**: 45 minutes
-
-Learn infrastructure lifecycle management including safe updates, state management, team collaboration, backup procedures, and controlled decommissioning.
-
-**You'll Learn**:
-
-- Update existing CAIRA deployments with new variables and resources
-- Manage Terraform state files and remote state configuration
-- Handle state locking in team collaboration scenarios
-- Implement backup and restore procedures for infrastructure state
-- Execute controlled resource tear-down with data preservation
-- Document operational procedures for infrastructure maintenance
-
-**Prerequisites**: [Kata 400: Customizing CAIRA](./400-customizing-caira-for-your-requirements.md) or [Kata 450: Securing CAIRA](./450-securing-caira-production.md), existing CAIRA deployment (1+ week old preferred)
-
-**Real-World Context**: Manage quarterly infrastructure refresh while adding GPT-4o model deployment, upgrading AI Search tier, updating cost center tags, and preserving trained model data.
-
 ## Kata Comparison Matrix
 
 | Kata                                                                                          | Difficulty      | Time   | Technologies                                           | Scaffolding  | Prerequisites                                                                           |
 |-----------------------------------------------------------------------------------------------|-----------------|--------|--------------------------------------------------------|--------------|-----------------------------------------------------------------------------------------|
 | [Kata 400: Customizing CAIRA](./400-customizing-caira-for-your-requirements.md)              | ⭐⭐⭐⭐ (4/5)     | 45 min | Terraform, CAIRA, Azure governance, tagging frameworks | Medium-Heavy | Kata 200 (Basic Deployment)                                                            |
 | [Kata 450: Securing CAIRA](./450-securing-caira-production.md)                                | ⭐⭐⭐⭐ (4/5)     | 45 min | Private Link, Managed Identity, RBAC, NSGs, ADR docs   | Medium-Heavy | Kata 200 (Basic Deployment), Azure networking basics                                   |
-| [Kata 500: Managing Lifecycle](./500-managing-caira-lifecycle.md)                             | ⭐⭐⭐⭐⭐ (5/5)    | 45 min | Terraform state, remote backends, Azure Storage, Git   | Light        | Kata 400 or 450, existing CAIRA deployment (1+ week old)                               |
 
 ## Suggested Learning Sequences
 
 ### For Production Readiness (Recommended)
 
 1. [Kata 400: Customizing CAIRA](./400-customizing-caira-for-your-requirements.md) - Organizational requirements
-2. [Kata 450: Securing CAIRA](./450-securing-caira-production.md) - Zero-trust security
-3. [Kata 500: Managing Lifecycle](./500-managing-caira-lifecycle.md) - Operational excellence
+1. [Kata 450: Securing CAIRA](./450-securing-caira-production.md) - Zero-trust security
 
-**Total Time**: 2.25 hours | **Outcome**: Comprehensive production deployment expertise
+**Total Time**: 1.5 hours | **Outcome**: Production-ready deployment with organizational governance and security hardening
 
 ### For Security-First Organizations (Compliance-Heavy)
 
 1. [Kata 450: Securing CAIRA](./450-securing-caira-production.md) - Start with security fundamentals
-2. [Kata 400: Customizing CAIRA](./400-customizing-caira-for-your-requirements.md) - Add organizational governance
-3. [Kata 500: Managing Lifecycle](./500-managing-caira-lifecycle.md) - Long-term management
+1. [Kata 400: Customizing CAIRA](./400-customizing-caira-for-your-requirements.md) - Add organizational governance
 
-**Total Time**: 2.25 hours | **Outcome**: Security-first with governance and operations
-
-### For Platform Engineering Teams
-
-1. [Kata 400: Customizing CAIRA](./400-customizing-caira-for-your-requirements.md) - Team standards
-2. [Kata 500: Managing Lifecycle](./500-managing-caira-lifecycle.md) - Collaboration workflows
-3. [Kata 450: Securing CAIRA](./450-securing-caira-production.md) - Security hardening
-
-**Total Time**: 2.25 hours | **Outcome**: Team collaboration with security awareness
+**Total Time**: 1.5 hours | **Outcome**: Security-first deployment with governance integration
 
 ## Real-World Applications
 
@@ -189,26 +157,18 @@ Build personalized recommendation engines with customer data privacy: private en
 **Scenario**: Private networking blocks developer access to AI services, causing friction.
 
 **Solution**:
+
 - Implement Azure Bastion or VPN for secure developer access
 - Use Azure Private DNS resolver for name resolution from on-premises
 - Consider hybrid approach: dev/test with public endpoints, production with private
 - Document trade-offs in ADR (covered in Kata 450)
-
-### Challenge: Terraform State Management in Team Environments
-
-**Scenario**: Multiple team members attempting concurrent deployments cause state lock conflicts.
-
-**Solution**:
-- Configure remote state storage with Azure Storage (Kata 500)
-- Implement state locking with lease mechanisms
-- Establish team workflows: one deployer at a time, CI/CD automation
-- Use separate state files for different environments (dev/test/prod)
 
 ### Challenge: Customization Breaking Module Updates
 
 **Scenario**: Heavy customization prevents upgrading to newer CAIRA module versions.
 
 **Solution**:
+
 - Document all customizations with rationale (Kata 400)
 - Test module updates in non-production first
 - Use variable overrides rather than forking modules
@@ -220,10 +180,11 @@ Build personalized recommendation engines with customer data privacy: private en
 **Scenario**: Security team requires comprehensive documentation for audit and compliance review.
 
 **Solution**:
+
 - Create ADRs for all architectural decisions (Kata 450)
 - Maintain security hardening checklist with validation
 - Document RBAC assignments with justification
-- Keep runbooks updated for operational procedures (Kata 500)
+- Keep runbooks updated for operational procedures
 - Use Infrastructure-as-Code for auditable change history
 
 ### Challenge: Cost Optimization vs. Performance Requirements
@@ -231,6 +192,7 @@ Build personalized recommendation engines with customer data privacy: private en
 **Scenario**: Default SKUs exceed budget but custom SKUs risk insufficient performance.
 
 **Solution**:
+
 - Start with recommended SKUs, monitor utilization (Kata 400)
 - Use Azure Cost Management for tracking and alerting
 - Implement tagging strategy for cost allocation visibility
@@ -244,7 +206,7 @@ Build personalized recommendation engines with customer data privacy: private en
 This category represents the **Expert** tier of the Azure AI Foundry deployment learning path:
 
 - **Foundation**: [CAIRA Fundamentals Category](../caira-fundamentals/) (Katas 100-350)
-- **Advanced**: This category (Katas 400-500) ← You are here
+- **Advanced**: This category (Katas 400-450) ← You are here
 - **Mastery**: Production case studies and team collaboration labs
 
 ### Security & Compliance Path
@@ -269,14 +231,14 @@ Complete category supports platform engineering competencies:
 
 **Duration**: 3-4 hours | **Difficulty**: Expert
 
-Comprehensive lab combining all three katas into a realistic enterprise deployment scenario:
+Comprehensive lab combining both katas into a realistic enterprise deployment scenario:
 
 1. **Phase 1**: Deploy customized CAIRA with organizational requirements (Kata 400 skills)
-2. **Phase 2**: Harden security with private networking and managed identities (Kata 450 skills)
-3. **Phase 3**: Simulate 3-month lifecycle including updates and team collaboration (Kata 500 skills)
-4. **Phase 4**: Validate against Azure Well-Architected Framework
+1. **Phase 2**: Harden security with private networking and managed identities (Kata 450 skills)
+1. **Phase 3**: Validate against Azure Well-Architected Framework
+1. **Phase 4**: Deploy sample AI application on secured infrastructure
 
-**Prerequisites**: Completed all three katas in this category
+**Prerequisites**: Completed both katas in this category
 
 **Link**: [Enterprise CAIRA Deployment Lab](../../training-labs/enterprise-caira-deployment/) *(Coming Soon)*
 
@@ -307,11 +269,13 @@ Comprehensive lab combining all three katas into a realistic enterprise deployme
 We continuously improve these learning katas based on community feedback.
 
 **Share Your Experience**:
+
 - What worked well in your learning journey?
 - Which concepts were challenging and need better explanation?
 - What real-world scenarios should we add?
 
 **Contribute**:
+
 - Submit issues for errors or unclear instructions
 - Propose new kata ideas for advanced CAIRA topics
 - Share your production deployment stories and lessons learned
@@ -322,7 +286,7 @@ We continuously improve these learning katas based on community feedback.
 
 | Version | Date       | Changes                                                                 |
 |---------|------------|-------------------------------------------------------------------------|
-| 1.0.0   | 12/15/2024 | Initial release with Kata 450 (Securing CAIRA for Production)          |
+| 1.0.0   | 12/18/2024 | Initial release with Kata 400 and 450 (Customization and Security)     |
 
 ---
 

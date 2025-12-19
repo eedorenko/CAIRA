@@ -58,8 +58,7 @@ requires_dev_container: true
 # Optional Fields
 related_katas:
   - caira-fundamentals-200-devcontainer-foundry-basic-deployment
-  - caira-fundamentals-400-customizing-caira-requirements
-  - caira-fundamentals-500-managing-caira-lifecycle
+  - caira-advanced-400-customizing-caira-requirements
 chatmode_references:
   - caira-assistant
   - learning-kata-coach
@@ -141,16 +140,18 @@ You're a platform engineer at a healthcare technology company building AI-powere
 
 ## Practice Tasks
 
-### Task 1: Prepare Prerequisites (5-15 minutes)
+### Task 1: Prepare Prerequisites (5-30 minutes)
 
 **What You'll Do**: Ensure you have the required prerequisite resources for foundry_standard_private architecture: VNet with subnets, Cosmos DB, Storage Account, and AI Search.
 
+**Production Reality**: The `foundry_standard_private` architecture is designed to work with **existing resources**. In enterprise environments, networking and shared services are typically managed by separate teams (network teams manage VNets, database teams manage Cosmos, etc.). This kata teaches you to work with that reality.
+
 **Two Paths**:
 
-- **Path A**: You already have these resources → Gather their IDs and skip to Task 2
-- **Path B**: You need to create these resources → Use the prerequisites terraform folder (15 min)
+- **Path A**: You already have these resources → Gather their IDs and skip to Task 2 (5 min)
+- **Path B**: You need to create these resources → Use Azure CLI to create secure infrastructure (20-30 min)
 
-**Why Prerequisites Matter**: The foundry_standard_private architecture requires existing networking (VNet + subnets) and capability host resources (Cosmos DB, Storage, AI Search) to deploy AI Foundry with private networking and agent capabilities.
+**Why Prerequisites Matter**: The foundry_standard_private architecture requires existing networking (VNet + subnets) and capability host resources (Cosmos DB, Storage, AI Search) to deploy AI Foundry with private networking and agent capabilities. This separation is a **production best practice**, not a limitation.
 
 **Choose Your Path**:
 
@@ -172,112 +173,264 @@ If you already have VNet, subnets, Cosmos DB, Storage Account, and AI Search:
    - [ ] Get resource group ID containing those resources
    - [ ] **Expected result**: Have 6 values ready (2 subnet IDs, 3 resource names, 1 RG ID)
 
-2. **Verify** security settings (optional but recommended for production)
+1. **Verify** security settings (optional but recommended for production)
    - [ ] Check if Cosmos DB has public access disabled: `az cosmosdb show --name <name> --resource-group <rg> --query publicNetworkAccess`
    - [ ] Check Storage Account: `az storage account show --name <name> --resource-group <rg> --query publicNetworkAccess`
    - [ ] Check AI Search: `az search service show --name <name> --resource-group <rg> --query publicNetworkAccess`
    - **Pro tip**: If public access is enabled, consider whether this meets your production security requirements. Kata focuses on AI Foundry security, but capability hosts should also be secured for true zero-trust.
    - [ ] **Expected result**: Awareness of existing resource security posture
 
-3. **Skip** to Task 2 with your gathered values
+1. **Skip** to Task 2 with your gathered values
 
 ---
 
-#### Path B: Deploy Prerequisites (15 minutes)
+#### Path B: Create Prerequisites with Azure CLI (20-30 minutes)
 
 If you need to create VNet, subnets, and capability host resources for this kata:
 
-**Why Separate Deployment?**: Terraform can't evaluate computed subnet IDs during planning. Deploying prerequisites separately is a **production pattern** for separating infrastructure concerns - not a workaround!
+**Why Separate Creation?**: The `foundry_standard_private` architecture is designed to consume **existing resources**. This mirrors real enterprise environments where infrastructure is managed by different teams. Creating prerequisites separately teaches this production pattern.
+
+**What You'll Create** (with security hardening):
+
+- Resource Group
+- Virtual Network (10.0.0.0/16) with 2 subnets (foundry: 10.0.1.0/24, agents: 10.0.2.0/24)
+- Cosmos DB NoSQL account (serverless, **public access disabled** ✅)
+- Storage Account (**Azure AD auth only, no shared keys** ✅)
+- AI Search service (basic SKU, **public access disabled** ✅)
 
 **Steps**:
 
-1. **Open** CAIRA repository in devcontainer
-   - [ ] Launch VS Code, open CAIRA repository folder
-   - [ ] Click "Reopen in Container" when prompted (or Command Palette → "Dev Containers: Reopen in Container")
-   - [ ] Wait for container build to complete
-   - [ ] **Expected result**: Terminal shows prompt inside devcontainer environment
+1. **Set environment variables** for consistent naming
+   - [ ] In terminal, run:
 
-2. **Navigate** to prerequisites directory
-   - [ ] In terminal, run: `cd reference_architectures/foundry_standard_private/prerequisites`
-   - [ ] Verify you're in correct directory: `pwd` should show `/workspaces/CAIRA/reference_architectures/foundry_standard_private/prerequisites`
-   - [ ] List files: `ls -la` - you should see `main.tf`, `variables.tf`, `terraform.tfvars`, `outputs.tf`
-   - [ ] **Expected result**: Prerequisites terraform workspace ready
+     ```bash
+     export LOCATION="eastus"
+     export RANDOM_SUFFIX=$(openssl rand -hex 3)
+     export RG_NAME="rg-kata450-prereqs-${RANDOM_SUFFIX}"
+     echo "Resource Group: ${RG_NAME}"
+     ```
 
-3. **Review** prerequisites configuration
-   - [ ] Open `terraform.tfvars` in editor
-   - [ ] Confirm `location = "eastus"` (or change to your preferred region)
-   - [ ] Optional: Set `capability_host_location = "westus2"` if you want split-region deployment for capacity resilience
-   - [ ] Review tags - customize if needed for your organization
-   - [ ] Open `main.tf` to understand what will be created:
-     - Virtual Network (10.0.0.0/16) in primary region
-     - Two subnets: foundry (10.0.1.0/24) and agents (10.0.2.0/24)
-     - Cosmos DB with `public_network_access_enabled = false` ✅ Secure!
-     - Storage Account with `shared_access_key_enabled = false` (Azure AD auth) ✅ Even more secure!
-     - AI Search with `public_network_access_enabled = false` ✅ Secure!
-     - Private DNS zones for AI Foundry (cognitive services, AI services, OpenAI)
-     - VNet links connecting DNS zones to VNet
-   - **Pro tip**: Notice all capability host resources have public access DISABLED and Storage uses Azure AD authentication instead of keys - this is maximum security hardening for production!
-   - [ ] **Expected result**: Understanding of complete secure infrastructure including private DNS zones
+   - [ ] **Expected result**: Resource group name displayed with random suffix
 
-4. **Initialize** prerequisites Terraform workspace
+1. **Create resource group**
+   - [ ] Run:
 
----
+     ```bash
+     az group create --name ${RG_NAME} --location ${LOCATION} \
+       --tags Environment=Learning Project=CAIRA-Kata-450 ManagedBy=AzureCLI
+     ```
 
-### Task 2: Deploy AI Foundry with Private Networking (20our-subscription-id"` (get from `az account show`)
+   - [ ] **Expected result**: JSON output showing resource group created successfully
 
-- [ ] Run: `terraform init`
-- [ ] Review output for successful provider downloads
-- **Validation checkpoint**: Did initialization complete without errors?
-- [ ] **Expected result**: Message "Terraform has been successfully initialized!"
+1. **Create Virtual Network with secure subnets**
+   - [ ] Run:
 
-5. **Generate** and review prerequisites plan
-   - [ ] Run: `terraform plan`
-   - [ ] Review resources being created:
-     - Resource group for prerequisites
-     - VNet and 2 subnets (foundry & agents)
-     - Cosmos DB, Storage Account, AI Search
-   - [ ] Verify security settings: `public_network_access_enabled = false` on all capability host resources
-   - **Validation checkpoint**: Should see ~8-10 resources to create
-   - [ ] **Expected result**: Clean plan with secure resources
+     ```bash
+     az network vnet create \
+       --resource-group ${RG_NAME} \
+       --name vnet-kata450 \
+       --address-prefix 10.0.0.0/16 \
+       --subnet-name foundry-subnet \
+       --subnet-prefix 10.0.1.0/24 \
+       --location ${LOCATION}
 
-6. **Deploy** prerequisites infrastructure
-   - [ ] Run: `terraform apply`
-   - [ ] Type `yes` when prompted to confirm
-   - [ ] Monitor deployment progress (typically 10-15 minutes)
-   - **Pro tip**: Cosmos DB, AI Search, and Private DNS zones take the longest to deploy
-   - **Note**: If deployment is interrupted, run `terraform apply` again to complete. DNS zones may need to be imported if they were partially created.
-   - [ ] **Expected result**: "Apply complete!" message with ~14 resources added
-   - **What Gets Created**:
-     - Resource group (e.g., `rg-kata450-prereqs-<random>`)
-     - VNet with 2 subnets (foundry, agents)
-     - Cosmos DB account (NoSQL API, serverless, public access disabled)
-     - Storage Account (Azure AD auth, no shared keys, public access disabled)
-     - AI Search service (basic SKU, public access disabled)
-     - 3 Private DNS zones (cognitive services, AI services, OpenAI)
-     - 3 VNet links (connecting DNS zones to VNet)
-     - 2 Network Security Groups (one per subnet)
+     az network vnet subnet create \
+       --resource-group ${RG_NAME} \
+       --vnet-name vnet-kata450 \
+       --name agents-subnet \
+       --address-prefix 10.0.2.0/24 \
+       --delegations Microsoft.App/environments
+     ```
 
-7. **Capture** output values for main deployment
-   - [ ] Run: `terraform output copy_to_main_tfvars`
-   - [ ] Copy the entire output block - this contains properly formatted variables for main deployment
-   - [ ] The output provides these key values:
-     - `foundry_subnet_id` - Full Azure resource ID for AI Foundry subnet
-     - `agents_subnet_id` - Full Azure resource ID for agents subnet
-     - `existing_capability_host_resource_group_id` - Resource group containing Cosmos/Storage/Search
-     - `existing_cosmosdb_account_name` - Name of Cosmos DB account
-     - `existing_storage_account_name` - Name of Storage account
-     - `existing_search_service_name` - Name of AI Search service
-   - [ ] Save to a temporary file or note-taking app (you'll paste into main terraform.tfvars in Task 2)
-   - [ ] **Expected result**: Full output block ready to use in main deployment configuration
+   - [ ] **Expected result**: VNet created with 2 subnets, agents subnet delegated to Microsoft.App/environments
 
-8. **Verify** prerequisites deployment in Azure Portal (optional but recommended)
-   - [ ] Navigate to Azure Portal → Resource Groups
-   - [ ] Find your prerequisites resource group (e.g., `rg-kata450-prereqs-<random>`)
-   - [ ] Verify all resources show "Succeeded" status
-   - [ ] Click on Storage Account → verify "Public network access" is disabled
-   - [ ] Click on Cosmos DB → verify "Public network access" is disabled
-   - [ ] Click on AI Search → verify "Public network access" is disabled
-   - [ ] **Expected result**: All prerequisite resources healthy with security settings confirmed
+1. **Create Cosmos DB (serverless)** ✅
+
+   **Important**: Azure CLI 2.81.0 has a known issue where `az cosmosdb create` requests an invalid API version. Use the Azure REST API directly as a workaround. This teaches a valuable production troubleshooting skill!
+
+   - [ ] Get your subscription ID and create Cosmos DB:
+
+     ```bash
+     SUB_ID=$(az account show --query id -o tsv)
+
+     az rest --method put \
+       --url "https://management.azure.com/subscriptions/${SUB_ID}/resourceGroups/rg-kata450-prereqs-${RANDOM_SUFFIX}/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-kata450-${RANDOM_SUFFIX}?api-version=2024-08-15" \
+       --body '{
+         "location": "eastus",
+         "properties": {
+           "databaseAccountOfferType": "Standard",
+           "capabilities": [{"name": "EnableServerless"}],
+           "consistencyPolicy": {"defaultConsistencyLevel": "Session"},
+           "locations": [{"locationName": "eastus", "failoverPriority": 0}]
+         }
+       }'
+     ```
+
+   - [ ] Creation starts asynchronously - will take 8-10 minutes
+   - **Note**: We'll disable public access after creation completes (some subscription policies block setting it during creation)
+   - **Pro tip**: Using `az rest` with specific API versions bypasses CLI bugs and is a valuable production skill
+   - [ ] **Expected result**: Cosmos DB creation initiated successfully
+
+1. **Create Storage Account with maximum security** ✅ (runs in parallel with Cosmos DB)
+   - [ ] While Cosmos DB is provisioning, create Storage Account:
+
+     ```bash
+     az storage account create \
+       --name stkata450${RANDOM_SUFFIX} \
+       --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+       --location eastus \
+       --sku Standard_LRS \
+       --kind StorageV2 \
+       --allow-blob-public-access false \
+       --public-network-access Disabled \
+       --allow-shared-key-access false \
+       --https-only true \
+       --min-tls-version TLS1_2
+     ```
+
+   - [ ] **Expected result**: Storage account created with maximum security (Azure AD auth only, no public access)
+   - **Security Highlight**: `--allow-shared-key-access false` enforces Azure AD authentication - no keys to leak!
+
+1. **Create AI Search with public access disabled** ✅ (runs in parallel)
+   - [ ] In parallel, create AI Search service:
+
+     ```bash
+     az search service create \
+       --name search-kata450-${RANDOM_SUFFIX} \
+       --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+       --location eastus \
+       --sku basic \
+       --public-network-access disabled \
+       --partition-count 1 \
+       --replica-count 1
+     ```
+
+   - [ ] Takes 3-5 minutes to provision
+   - [ ] **Expected result**: AI Search created with `publicNetworkAccess: Disabled`
+   - **Production Tip**: Creating resources in parallel saves time - Storage and Search don't depend on each other
+
+1. **Wait for Cosmos DB and verify all resources**
+   - [ ] Check Cosmos DB provisioning status (should take 8-10 minutes total):
+
+     ```bash
+     az cosmosdb show --name cosmos-kata450-${RANDOM_SUFFIX} --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+       --query "{Name:name, Status:provisioningState, Location:location}" -o table
+     ```
+
+   - [ ] Wait until Status shows "Succeeded" (check every 2-3 minutes)
+   - [ ] **Expected result**: Cosmos DB shows `Status: Succeeded`
+
+1. **Harden Cosmos DB security** (disable public access)
+   - [ ] Once Cosmos DB is provisioned, disable public network access:
+
+     ```bash
+     SUB_ID=$(az account show --query id -o tsv)
+
+     az rest --method patch \
+       --url "https://management.azure.com/subscriptions/${SUB_ID}/resourceGroups/rg-kata450-prereqs-${RANDOM_SUFFIX}/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-kata450-${RANDOM_SUFFIX}?api-version=2024-08-15" \
+       --body '{"properties": {"publicNetworkAccess": "Disabled"}}'
+     ```
+
+   - [ ] Wait 1-2 minutes for update to complete
+   - [ ] **Expected result**: Cosmos DB updated with `publicNetworkAccess: Disabled`
+   - **Why Separate?**: Some subscription policies block setting public access during creation, but allow updates
+
+1. **Verify security posture of all resources**
+   - [ ] Run comprehensive security check:
+
+     ```bash
+     echo "=== Security Posture Verification ==="
+
+     az cosmosdb show --name cosmos-kata450-${RANDOM_SUFFIX} \
+       --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+       --query "{Name:name, PublicAccess:publicNetworkAccess, Status:provisioningState}" -o table
+
+     az storage account show --name stkata450${RANDOM_SUFFIX} \
+       --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+       --query "{Name:name, PublicAccess:publicNetworkAccess, SharedKeyAccess:allowSharedKeyAccess}" -o table
+
+     az search service show --name search-kata450-${RANDOM_SUFFIX} \
+       --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+       --query "{Name:name, PublicAccess:publicNetworkAccess}" -o table
+     ```
+
+   - [ ] Verify all show: `PublicAccess: Disabled`, Storage shows `SharedKeyAccess: false`
+   - [ ] **Expected result**: All prerequisite resources meet zero-trust security requirements ✅
+
+1. **Create Private DNS Zones** for AI Foundry private networking
+    - [ ] Create required Private DNS Zones and link to VNet:
+
+      ```bash
+      # Create Private DNS Zones
+      az network private-dns zone create \
+        --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+        --name privatelink.cognitiveservices.azure.com
+
+      az network private-dns zone create \
+        --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+        --name privatelink.services.ai.azure.com
+
+      az network private-dns zone create \
+        --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+        --name privatelink.openai.azure.com
+
+      # Link Private DNS Zones to VNet
+      az network private-dns link vnet create \
+        --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+        --zone-name privatelink.cognitiveservices.azure.com \
+        --name cognitive-vnet-link \
+        --virtual-network vnet-kata450 \
+        --registration-enabled false
+
+      az network private-dns link vnet create \
+        --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+        --zone-name privatelink.services.ai.azure.com \
+        --name aiservices-vnet-link \
+        --virtual-network vnet-kata450 \
+        --registration-enabled false
+
+      az network private-dns link vnet create \
+        --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+        --zone-name privatelink.openai.azure.com \
+        --name openai-vnet-link \
+        --virtual-network vnet-kata450 \
+        --registration-enabled false
+      ```
+
+    - [ ] **Expected result**: Three Private DNS Zones created and linked to VNet for private endpoint name resolution
+    - **Why Needed?**: Private endpoints need DNS zones to resolve private IP addresses for AI services. Without these, AI Foundry deployment will fail.
+
+1. **Capture resource IDs** for AI Foundry deployment
+    - [ ] Get all required resource identifiers:
+
+      ```bash
+      export FOUNDRY_SUBNET_ID=$(az network vnet subnet show \
+        --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+        --vnet-name vnet-kata450 \
+        --name foundry-subnet \
+        --query id -o tsv)
+
+      export AGENTS_SUBNET_ID=$(az network vnet subnet show \
+        --resource-group rg-kata450-prereqs-${RANDOM_SUFFIX} \
+        --vnet-name vnet-kata450 \
+        --name agents-subnet \
+        --query id -o tsv)
+
+      export RG_ID=$(az group show \
+        --name rg-kata450-prereqs-${RANDOM_SUFFIX} \
+        --query id -o tsv)
+
+      echo -e "\n📋 Copy these values for Task 2 (AI Foundry deployment):\n"
+      echo "agents_subnet_id = \"${AGENTS_SUBNET_ID}\""
+      echo "foundry_subnet_id = \"${FOUNDRY_SUBNET_ID}\""
+      echo "existing_capability_host_resource_group_id = \"${RG_ID}\""
+      echo "existing_cosmosdb_account_name = \"cosmos-kata450-${RANDOM_SUFFIX}\""
+      echo "existing_storage_account_name = \"stkata450${RANDOM_SUFFIX}\""
+      echo "existing_search_service_name = \"search-kata450-${RANDOM_SUFFIX}\""
+      ```
+
+    - [ ] Copy all 6 values to a temporary file - you'll paste into `terraform.tfvars` in Task 2
+    - [ ] **Expected result**: All prerequisite resource identifiers ready for AI Foundry deployment
 
 ### Task 2: Deploy AI Foundry with Private Networking (35-50 minutes)
 
@@ -292,13 +445,11 @@ If you need to create VNet, subnets, and capability host resources for this kata
    - [ ] Verify you're in correct directory: `pwd` should show `/workspaces/CAIRA/reference_architectures/foundry_standard_private`
    - [ ] **Expected result**: Main terraform workspace directory
 
-2. **Configure** main deployment with prerequisite values
-   - [ ] Create file: `terraform.tfvars`
+1. **Configure** main deployment with prerequisite values
+   - [ ] Create or edit file: `terraform.tfvars`
    - [ ] Add prerequisite resource values:
      - **If you used Path A** (existing resources): Use the IDs/names you gathered
-     - **If you used Path B** (deployed prerequisites): Paste the output from `terraform output copy_to_main_tfvars`utputs
-   - [ ] Create file: `terraform.tfvars`
-   - [ ] Paste the output values from Task 1, Step 7
+     - **If you used Path B** (created with Azure CLI): Paste the values from Task 1, Step 7
    - [ ] Add additional configuration:
 
      ```hcl
@@ -315,13 +466,21 @@ If you need to create VNet, subnets, and capability host resources for this kata
    - **Validation checkpoint**: terraform.tfvars should have 6 prerequisite values plus location and tags
    - [ ] **Expected result**: Complete configuration ready for deployment
 
-3. **Initialize** main Terraform workspace
-   - [ ] Ensure subscription is set: `export ARM_SUBSCRIPTION_ID="your-subscription-id"`
+1. **Initialize** main Terraform workspace
+   - [ ] Set Azure subscription ID as environment variable:
+
+     ```bash
+     export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+     echo "✅ ARM_SUBSCRIPTION_ID set to: ${ARM_SUBSCRIPTION_ID}"
+     ```
+
    - [ ] Run: `terraform init`
    - [ ] Review output for module downloads (ai_foundry, ai_foundry_project, common_models)
    - [ ] **Expected result**: Successful initialization with modules
 
-4. **Generate** and review main deployment plan
+   > **💡 Why use environment variable?**: Setting `ARM_SUBSCRIPTION_ID` allows Terraform to authenticate without modifying provider configuration files. This is the preferred approach for dev containers and CI/CD pipelines.
+
+1. **Generate** and review main deployment plan
    - [ ] Run: `terraform plan -out=tfplan`
    - [ ] Review plan output carefully for security indicators:
      - Private endpoints for AI Foundry resources
@@ -333,7 +492,7 @@ If you need to create VNet, subnets, and capability host resources for this kata
    - **Validation checkpoint**: Should see ~40-50 resources to create, all using private networking
    - [ ] **Expected result**: Clean plan with secure AI Foundry architecture
 
-5. **Deploy** AI Foundry infrastructure
+1. **Deploy** AI Foundry infrastructure
    - [ ] Run: `terraform apply tfplan`
    - [ ] Monitor deployment progress - **this takes 35-45 minutes** due to agent network injection
    - **⚠️ Terraform Timeout Expected**: After ~30 minutes, Terraform will show a timeout error like `context deadline exceeded`. **This is NOT a failure!** The AI Foundry resource continues provisioning in Azure.
@@ -368,7 +527,7 @@ If you need to create VNet, subnets, and capability host resources for this kata
 
 - [ ] **Expected result**: Remaining resources created, full deployment complete
 
-6. **Verify** deployment in Azure Portal
+1. **Verify** deployment in Azure Portal
    - [ ] Open Azure Portal, search for resource group `rg-standard-private-*`
    - [ ] Confirm presence of: AI Foundry, AI Foundry Project, Application Insights, Private Endpoints
    - [ ] Click on AI Foundry resource → Networking → verify "Public network access: Disabled"
@@ -388,26 +547,26 @@ If you need to create VNet, subnets, and capability host resources for this kata
    - **Pro tip**: Use `caira-assistant` or `@workspace` to ask: "Show me the ADR template structure from CAIRA docs/adr/ directory"
    - [ ] **Expected result**: ADR markdown file with proper template structure ready for content
 
-2. **Document** private networking decision
+1. **Document** private networking decision
    - [ ] In ADR under "Context" section, explain why private networking was required (healthcare compliance, zero-trust principles)
    - [ ] In "Decision" section, document: "Deployed foundry_standard_private with public_network_access_enabled=false, private endpoints for all services"
    - [ ] In "Consequences" section, note: "Services only accessible from VNet. Requires VPN or ExpressRoute for developer access. Increases deployment complexity but meets compliance requirements."
    - [ ] **Expected result**: Private networking decision clearly documented with business context
 
-3. **Document** managed identity decision
+1. **Document** managed identity decision
    - [ ] Add section documenting authentication approach: "Implemented managed identities for service-to-service authentication"
    - [ ] Explain trade-off: "Disabled API key authentication. Simplifies credential management and rotation. Requires proper RBAC configuration. Aligns with zero-trust principles."
    - [ ] List specific managed identity assignments (AI Foundry  to Storage, AI Foundry to Key Vault)
    - **Validation checkpoint**: Does your documentation explain WHY these decisions were made, not just WHAT was configured?
    - [ ] **Expected result**: Authentication strategy documented with clear rationale
 
-4. **Document** RBAC least-privilege approach
+1. **Document** RBAC least-privilege approach
    - [ ] Add section: "Applied least-privilege RBAC with role-specific assignments"
    - [ ] List key role assignments: Azure AI Developer for developers, Cognitive Services User for applications, Storage Blob Data Reader for read-only scenarios
    - [ ] Note security benefit: "Prevents privilege escalation. Limits blast radius of compromised credentials. Supports audit and compliance requirements."
    - [ ] **Expected result**: RBAC strategy clearly documented with security benefits
 
-5. **Review** and finalize ADR
+1. **Review** and finalize ADR
    - [ ] Add "Alternatives Considered" section listing options like: foundry_basic (rejected - no private networking), manual configuration (rejected - not repeatable)
    - [ ] Add date, author, status (Accepted), and any review board approval tracking
    - [ ] Save and commit ADR to version control
@@ -430,31 +589,43 @@ If you need to create VNet, subnets, and capability host resources for this kata
 
 **Next Steps**:
 
-- Try [Kata 350: Validating CAIRA with Sample AI Application](./350-validating-caira-with-sample-ai-application.md) to test your secured infrastructure
-- Explore [Kata 500: Managing CAIRA Infrastructure Lifecycle](./500-managing-caira-lifecycle.md) for update procedures
+- Try [Kata 350: Validating CAIRA with Sample AI Application](../caira-fundamentals/350-validating-caira-with-sample-ai-application.md) to test your secured infrastructure
+- Explore [Kata 400: Customizing CAIRA for Your Requirements](./400-customizing-caira-for-your-requirements.md) to add organizational governance
 - Review Azure Security Benchmark recommendations for AI workloads
 
 ---
 
 ## Reference Appendix
 
-- **Prerequisites Folder**: `reference_architectures/foundry_standard_private/prerequisites/` - Optional Terraform configuration for creating VNet, capability host resources, private DNS zones, and VNet links
+### Production Pattern: Existing Resources
+
+The `foundry_standard_private` architecture is designed to work with **existing Azure resources** (VNet, Cosmos DB, Storage, AI Search). This reflects real enterprise environments where:
+
+- **Network teams** manage VNets and subnets
+- **Database teams** manage Cosmos DB instances
+- **Platform teams** manage shared Storage and AI Search services
+- **Application teams** deploy AI Foundry on top of existing infrastructure
+
+**For this kata**, if you don't have existing resources, use **Path B (Azure CLI)** to create secure prerequisite infrastructure that meets production security requirements.
 
 ### Key Learnings
 
-- **Two-stage deployment pattern**: Separating networking/shared services from application infrastructure is production best practice, not a workaround
-- **Azure AD authentication**: Using `shared_access_key_enabled = false` on Storage Accounts is more secure than key-based access
-- **Private DNS zones**: Required for AI Foundry private endpoints to resolve correctly within the VNet
-- **Split-region deployment**: VNet can be in one region (e.g., eastus for AI Foundry) while capability hosts are in another (e.g., westus2 for capacity)
-- **Use existing resources when possible**: In real environments, networking and shared services often already exist - this kata supports both scenarios
+### Key Learnings
+
+- **Production pattern: Existing resources**: The `foundry_standard_private` architecture works with existing infrastructure (VNet, Cosmos DB, Storage, AI Search), reflecting real enterprise separation of concerns
+- **Infrastructure separation**: Network teams manage VNets, database teams manage Cosmos, platform teams manage shared services - this kata teaches working across team boundaries
+- **Azure CLI troubleshooting**: When CLI tools have bugs (like Cosmos DB API version issue), use `az rest` to call Azure REST APIs directly with specific API versions
+- **Create-then-harden pattern**: Sometimes you must create resources first, then apply security hardening (like disabling public access) as a separate update - common in enterprise environments with strict policies
+- **Parallel resource creation**: Create independent resources (Storage, Search) in parallel while Cosmos DB provisions - saves time in production deployments
+- **Azure AD authentication**: Using `--allow-shared-key-access false` on Storage Accounts is more secure than key-based access - no credentials to leak!
+- **Security by default**: All prerequisite resources created with `public access disabled` for maximum security hardening
 - **Agent network injection takes time**: AI Foundry with agent capabilities requires 35-45 minutes to provision due to managed network infrastructure setup
-- **Terraform timeouts are normal**: The 30-minute Terraform timeout doesn't mean failure - Azure continues provisioning. Learn to check Azure status and import resources.
-- **Production resilience**: Understanding how to recover from timeouts and import existing resources is a critical production skill
+- **Terraform timeouts are normal**: The 30-minute Terraform timeout doesn't mean failure - Azure continues provisioning. Learn to check Azure status and import resources
+- **Production resilience**: Understanding how to recover from tool bugs, timeouts, and import existing resources is a critical production skill
 - Always run `terraform plan` and review security settings before applying production infrastructure
 - Document security decisions as you make them - ADRs are invaluable during compliance audits
-- Use Azure Advisor Security recommendations to identify additional hardening opportunities
-- **Prerequisites reusability**: One set of prerequisites (VNet, Cosmos, Storage, Search, DNS zones) can support multiple AI Foundry deployments
-- **Security audit**: When using existing resources, verify they meet your security requirements (public access disabled, encryption enabled, authentication method)
+- **Prerequisites reusability**: One set of prerequisites (VNet, Cosmos, Storage, Search) can support multiple AI Foundry deployments
+- **Security audit**: When using existing resources (Path A), verify they meet your security requirements (public access disabled, encryption enabled, authentication method)
 - Test managed identity authentication from applications before disabling API keys in production
 - Keep security hardening checklist updated as Azure security best practices evolve
 
@@ -470,45 +641,45 @@ If you need to create VNet, subnets, and capability host resources for this kata
 **Issue**: "Required variable not set" errors for subnet IDs or resource names
 
 - **Root Cause**: The foundry_standard_private architecture requires existing resources - it doesn't create VNet or capability host resources
-- **Solution**: Either use existing resources (Path A) or deploy prerequisites first (Path B). Provide all required variable values in `terraform.tfvars`
+- **Solution**: Either use existing resources (Path A) or create prerequisites with Azure CLI (Path B). Provide all required variable values in `terraform.tfvars`
 - **Required Variables**: `agents_subnet_id`, `foundry_subnet_id`, `existing_capability_host_resource_group_id`, `existing_cosmosdb_account_name`, `existing_storage_account_name`, `existing_search_service_name`
+- **Production Reality**: In enterprise environments, networking and shared services are usually managed separately from application infrastructure. This kata teaches that real-world pattern.
 
 **Issue**: I want to create everything in one terraform apply
 
-- **Root Cause**: Terraform can't determine `count` values when they depend on computed resource outputs (like subnet IDs created in same configuration)
-- **Why It Matters**: The AI Foundry module needs to know at plan time whether subnets exist to decide resource creation strategy
-- **Production Reality**: In enterprise environments, networking and shared services are usually managed separately from application infrastructure anyway. This kata teaches that real-world pattern.ble until after apply.
-- **Production Pattern**: This two-stage approach is actually best practice for enterprise deployments - separating networking/shared services from application infrastructure
+- **Root Cause**: The `foundry_standard_private` architecture is **designed** to work with existing resources, not create them
+- **Why It Matters**: This mirrors real enterprise environments where network teams, database teams, and application teams manage different infrastructure layers
+- **Production Pattern**: Separating infrastructure concerns (networking/shared services from application workloads) is best practice for enterprise deployments
+- **Solution**: Create prerequisite resources using Azure CLI (Path B in Task 1) or use existing resources (Path A)
 
-**Issue**: Prerequisites deployment shows `public_network_access_enabled = true`
+**Issue**: Cosmos DB creation fails with "InvalidApiVersionParameter" error
 
-- **Quick Fix**: Verify you're using the updated `prerequisites/main.tf` that explicitly sets `public_network_access_enabled = false` on Cosmos DB, Storage Account, and AI Search resources
-- **Why It Matters**: Default Azure settings often enable public access. Explicit configuration ensures production security compliance
+- **Root Cause**: Azure CLI 2.81.0 has a bug where `az cosmosdb create` requests API version `2025-04-15` which doesn't exist
+- **Solution**: Use `az rest` with the REST API directly and specify a valid API version (e.g., `2024-08-15`)
+- **Why This Works**: Bypasses the CLI bug by calling Azure Resource Manager REST API directly
+- **Production Learning**: Using `az rest` is a valuable troubleshooting technique when CLI tools have issues
+- **Command Example**: See Task 1, Step 4 in the kata for the working REST API approach
+
+**Issue**: Cosmos DB creation fails with "Bad Request" when setting publicNetworkAccess during creation
+
+- **Root Cause**: Some Azure subscription policies block setting `publicNetworkAccess: Disabled` during initial Cosmos DB creation
+- **Solution**: Create Cosmos DB first without the public access parameter, then update it after provisioning completes
+- **Why This Works**: Azure policies may allow updates that they block during creation
+- **Production Pattern**: Create resources first, harden security settings second - common in enterprise environments
+- **Command**: Use `az rest --method patch` to update `publicNetworkAccess` after creation (see Task 1, Step 8)
 
 **Issue**: Storage Account deployment fails with "Key based authentication is not permitted"
 
 - **Root Cause**: Your Azure subscription has a security policy that prevents key-based authentication on Storage Accounts (this is good!)
-- **Solution**: The prerequisites terraform is configured to use Azure AD authentication instead (`shared_access_key_enabled = false` with `storage_use_azuread = true` in provider)
+- **Solution**: Path B Azure CLI commands already use `--allow-shared-key-access false` to enforce Azure AD authentication only
 - **Why This Is Better**: Azure AD authentication is more secure than key-based access. No credentials to manage or rotate!
-- **If Still Failing**: Ensure the Terraform azurerm provider version supports `storage_use_azuread` (requires ~> 4.40 or later)
-
-**Issue**: Terraform plan fails with "Private DNS Zone not found"
-
-- **Root Cause**: The AI Foundry module requires private DNS zones to exist before deployment
-- **Solution**: The prerequisites terraform now creates all required DNS zones (privatelink.cognitiveservices.azure.com, privatelink.services.ai.azure.com, privatelink.openai.azure.com) and VNet links automatically
-- **If Already Deployed Prerequisites Without DNS Zones**: Add the DNS zone resources to prerequisites/main.tf, run `terraform apply`, import any existing zones if needed, then deploy main AI Foundry
-
-**Issue**: DNS zones created but deployment still fails
-
-- **Quick Fix**: The DNS zones need VNet links. Verify prerequisites/main.tf includes `azurerm_private_dns_zone_virtual_network_link` resources for each DNS zone
-- **Import if Needed**: If zones exist but aren't in Terraform state, import them: `terraform import azurerm_private_dns_zone.cognitive <zone-resource-id>`
+- **Verification**: Check the storage account with `az storage account show --name <name> --resource-group <rg> --query allowSharedKeyAccess` - should return `false`
 
 **Issue**: Private endpoint DNS resolution fails - services unreachable
 
-- **Quick Fix**: Verify private DNS zones are created and linked to VNet. Check main deployment outputs for private DNS zone resources. May need custom DNS configuration on VNet or Azure DNS Private Resolver
-- **Additional Check**: Ensure you're accessing services from within the VNet or via VPN/ExpressRoute connected to the VNet
-
-- **Quick Fix**: Verify private DNS zones are created and linked to VNet. Check `terraform plan` output for `azurerm_private_dns_zone` and `azurerm_private_dns_zone_virtual_network_link` resources. May need to configure custom DNS on VNet or use Azure DNS Private Resolver.
+- **Root Cause**: Private DNS zones are required for private endpoint name resolution within VNets
+- **Solution**: The foundry_standard_private module creates private DNS zones and links automatically. Ensure you're accessing services from within the VNet or via VPN/ExpressRoute connected to the VNet
+- **Additional Check**: Verify private DNS zone resources in Azure Portal under your AI Foundry resource group
 
 **Issue**: "Insufficient privileges" error during RBAC configuration
 
@@ -528,9 +699,9 @@ If you need to create VNet, subnets, and capability host resources for this kata
 - **This is NOT a failure!** The resource continues provisioning in Azure after Terraform times out.
 - **Solution**:
   1. Check provisioning status: `az cognitiveservices account show --name <name> --resource-group <rg> --query "properties.provisioningState" -o tsv`
-  2. Wait until status changes from "Creating" to "Succeeded" (check every 2-3 minutes)
-  3. Import the completed resource: `terraform import 'module.ai_foundry.azapi_resource.ai_foundry' '<full-resource-id>'`
-  4. Run `terraform apply` to deploy remaining resources (Project, models, RBAC)
+  1. Wait until status changes from "Creating" to "Succeeded" (check every 2-3 minutes)
+  1. Import the completed resource: `terraform import 'module.ai_foundry.azapi_resource.ai_foundry' '<full-resource-id>'`
+  1. Run `terraform apply` to deploy remaining resources (Project, models, RBAC)
 - **Why So Long?**: Agent network injection involves creating managed network infrastructure, configuring VNet integration, setting up private endpoints, and establishing secure connectivity - all of which require careful orchestration by Azure.
 
 **Issue**: "Resource already exists" error after Terraform timeout
@@ -569,9 +740,9 @@ If you need to create VNet, subnets, and capability host resources for this kata
 
 - **Solution if Failed**:
   1. Delete the failed CapabilityHost: `az rest --method delete --url "https://management.azure.com/.../capabilityHosts/<capability-host-name>?api-version=2025-04-01-preview"`
-  2. Wait 1-2 minutes for deletion to complete
-  3. Retry `terraform apply` - the system should auto-create a new CapabilityHost
-  4. **Note**: Account CapabilityHost can take 45-60 minutes to provision with agent network injection
+  1. Wait 1-2 minutes for deletion to complete
+  1. Retry `terraform apply` - the system should auto-create a new CapabilityHost
+  1. **Note**: Account CapabilityHost can take 45-60 minutes to provision with agent network injection
 - **Solution if Still Creating**: Wait for "provisioningState" to become "Succeeded" before retrying Project creation
 
 ---

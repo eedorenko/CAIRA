@@ -12,6 +12,7 @@ The kata coach will guide you through practical exercises to master CAIRA deploy
 ## Available Katas
 
 - **caira-fundamentals/** - Core CAIRA concepts and deployment basics
+- **caira-advanced/** - Expert-level production-ready deployments
 - **troubleshooting/** - Diagnostic and problem-solving techniques
 
 ## Starting a Learning Session
